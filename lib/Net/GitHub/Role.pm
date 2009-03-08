@@ -2,7 +2,7 @@ package Net::GitHub::Role;
 
 use Moose::Role;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use JSON::Any;
@@ -12,25 +12,12 @@ use Data::Dumper;
 
 has 'debug' => ( is => 'rw', isa => 'Str', default => 0 );
 
-# http://github.com/fayland/perl-net-github/tree/master
-has 'owner' => ( isa => 'Str', is => 'rw' );
-has 'name'  => ( isa => 'Str', is => 'rw' );
-
 # login
 has 'email' => ( isa => 'Str', is => 'rw', default => '' );
 has 'password' => ( isa => 'Str', is => 'rw', default => '' );
 
 # api
 has 'api_url' => ( is => 'ro', default => 'http://github.com/api/v1/json/');
-
-sub args_to_pass {
-    my $self = shift;
-    my $ret;
-    foreach my $col ('owner', 'name', 'email', 'password' ) {
-        $ret->{$col} = $self->$col;
-    }
-    return $ret;
-}
 
 has 'ua' => (
     isa     => 'WWW::Mechanize',
@@ -94,13 +81,17 @@ Net::GitHub::Role - Common between Net::GitHub::* libs
 
 =over 4
 
-=item owner
+=item ua
 
-'fayland' of http://github.com/fayland/perl-net-github/tree/master
+instance of L<WWW::Mechanize>
 
-=item name
+=item json
 
-'perl-net-github' of http://github.com/fayland/perl-net-github/tree/master
+instance of L<JSON::Any>
+
+=item get
+
+wrap ua->get with success check
 
 =back
 
