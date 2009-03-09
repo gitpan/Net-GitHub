@@ -2,7 +2,7 @@ package Net::GitHub;
 
 use Moose;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 with 'Net::GitHub::Role';
@@ -53,7 +53,7 @@ Net::GitHub - Perl Interface for github.com
     print Dumper(\$project->commits);
     
     # user
-    my $user = $github->user( username => 'fayland' );
+    my $user = $github->user( 'fayland' );
     foreach my $repos ( @{ $user->repositories} ) {
         print "$repos->{owner} + $repos->{name}\n";
     }
@@ -75,9 +75,14 @@ Net::GitHub is still in its infancy. backwards compatibility is not yet guarante
 
 =head2 project
 
+    $github->project( owner => 'fayland', name => 'perl-net-github' );
+    $github->project( 'fayland', 'perl-net-github' );
+
 instance of L<Net::GitHub::Project>
 
 =head2 user
+
+    $github->user( 'fayland' );
 
 instance of L<Net::GitHub::User>
 

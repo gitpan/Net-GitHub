@@ -2,7 +2,7 @@ package Net::GitHub::User;
 
 use Moose;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 with 'Net::GitHub::Role';
@@ -11,7 +11,7 @@ has 'username' => ( is => 'ro', required => 1, isa => 'Str' );
 
 has '__user' => (
     is => 'rw', isa => 'Net::GitHub::UserObj', lazy_build => 1,
-    handles => [qw/name repositories blog login location/],
+    handles => [qw/name repositories blog location email company/],
 );
 sub _build___user {
     my $self = shift;
@@ -20,6 +20,16 @@ sub _build___user {
     my $json = $self->get($url);
     my $data = $self->json->jsonToObj($json);
     return Net::GitHub::UserObj->new($data->{user});
+}
+
+sub BUILDARGS {
+    my $class = shift;
+
+    if ( @_ == 1 && ! ref $_[0] ) {
+        return { username => $_[0] };
+    } else {
+        return $class->SUPER::BUILDARGS(@_);
+    }
 }
 
 package     # hide from PAUSE
@@ -32,8 +42,9 @@ has 'repositories' => (
     is => 'rw', isa => 'ArrayRef'
 );
 has 'blog' => ( is => 'rw' );
-has 'login' => ( is => 'rw' );
+has 'email' => ( is => 'rw' );
 has 'location' => ( is => 'rw' );
+has 'company' => ( is => 'rw' );
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
@@ -49,7 +60,7 @@ Net::GitHub::User - GitHub user
 
     use Net::GitHub::User;
 
-    my $user = Net::GitHub::User->new( username => 'fayland' );
+    my $user = Net::GitHub::User->new( 'fayland' );
     foreach my $repos ( @{ $user->repositories} ) {
         print "$repos->{owner} + $repos->{name}\n";
     }
@@ -62,9 +73,11 @@ Net::GitHub::User - GitHub user
 
 =item name
 
+=item email
+
 =item blog
 
-=item login
+=item company
 
 =item location
 
