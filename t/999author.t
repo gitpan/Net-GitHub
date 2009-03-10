@@ -9,13 +9,17 @@ BEGIN {
     plan tests => 1;
 };
 
-use Net::GitHub;
-use Data::Dumper;
+use Net::GitHub::Project::Wiki;
 
-my $github = Net::GitHub->new( owner => 'fayland', name => 'perl-net-github', debug => 1 );
+my $wiki = Net::GitHub::Project::Wiki->new(
+    owner => 'fayland',
+    name  => 'perl-net-github',
+    login => 'fayland',
+    password => $ENV{TEST_NET_GITHUB_PASS}
+);
 
-#my $c = $github->get('http://github.com/api/v1/json/fayland/perl-net-github/commit/725d3f6e8094e533f768710ce96504f7e2b67420');
-#diag Dumper(\$c);
+my $st = $wiki->edit_or_new('TestPage2', "FROM 999author.t\n\n\nLine 2\n\n LLLL 3");
+diag("return $st");
 
 ok 1;
 

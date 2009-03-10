@@ -19,11 +19,11 @@ no_index:
     - t
 requires:
   Crypt::SSLeay: 0
-  Data::Dumper: 0
+  HTML::TreeBuilder: 0
   JSON::Any: 0
   Moose: 0.57
   URI::Escape: 0
-  WWW::Mechanize: 0
+  WWW::Mechanize::GZip: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.03
+version: 0.04

@@ -2,15 +2,12 @@ package Net::GitHub::Role;
 
 use Moose::Role;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use JSON::Any;
-use WWW::Mechanize;
+use WWW::Mechanize::GZip;
 use Carp qw/croak/;
-use Data::Dumper;
-
-has 'debug' => ( is => 'rw', isa => 'Str', default => 0 );
 
 # login
 has 'login'  => ( is => 'rw', isa => 'Str', default => '' );
@@ -27,15 +24,36 @@ has 'ua' => (
     lazy    => 1,
     default => sub {
         my $self = shift;
-        my $m    = WWW::Mechanize->new(
-			agent       => 'perl-net-github',
+        my $m    = WWW::Mechanize::GZip->new(
+			agent       => "perl-net-github $VERSION",
             cookie_jar  => {},
             stack_depth => 1,
             timeout     => 60,
         );
         return $m;
-    }
+    },
 );
+
+sub get {
+    my $self = shift;
+    
+    my $resp = $self->ua->get(@_);
+    unless ( $resp->is_success ) {
+        croak $resp->as_string();
+    }
+    return $resp->content();
+}
+
+sub submit_form {
+    my $self = shift;
+    
+    my $resp = $self->ua->submit_form(@_);
+    unless ( $resp->is_success ) {
+        croak $resp->as_string();
+    }
+    return $resp;
+}
+
 has 'json' => (
     is => 'ro',
     isa => 'JSON::Any',
@@ -45,49 +63,32 @@ has 'json' => (
     }
 );
 
-sub get {
-    my ( $self, $url ) = @_;
-
-    $self->ua->get($url);
-    if ( ! $self->ua->success() ) {
-        croak 'Server threw an error '
-          . $self->ua->response->status_line . ' for '
-          . $url;
-    } else {
-#        open(my $fh, '>', '/home/fayland/git/perl-net-github/t/mockdata/single_commit.json');
-#        print $fh $self->ua->content;
-#        close($fh);
-        return $self->ua->content;
-    }
-}
-
 sub signin {
     my $self = shift;
     
     return 1 if $self->is_signin;
-    
-    if ( scalar @_ == 2 ) {
-        $self->login = $_[0];
-        $self->password = $_[1];
-    }
-    
-    croak "login(login, password)" unless $self->login and $self->password;
-    
-    my $mech = $self->ua;
-    $mech->get( "https://github.com/login" );
-    croak "Couldn't recognize login page!\n" unless $mech->content =~ /Login/;
 
-    $mech->submit_form(
-		form_number => 1,
-		fields      => {
+    croak "login and password are required" unless $self->login and $self->password;
+    
+    my $ua = $self->ua;
+    $ua->get( "https://github.com/login" );
+    croak "Couldn't recognize login page!\n" unless $ua->content =~ /Login/;
+
+    $ua->submit_form(
+		with_fields   => {
 			login     => $self->login,
 			password  => $self->password,
-			commit    => 'Log in',
 		}
     );
-
-    $self->is_login = 1;
-    return 1;
+    
+    # github_user = null
+    if ( $ua->content() =~ /github_user\s+\=\s+null/s ) {
+        croak "Incorrect login or password." if $ua->content =~ /Login/;
+        return 0;
+    } else {
+        $self->is_signin(1);
+        return 1;
+    }
 }
 
 no Moose::Role;
@@ -134,13 +135,15 @@ instance of L<JSON::Any>
 
 =item get
 
-wrap ua->get with success check
+=item submit_form
+
+handled by L<WWW::Mechanize>
 
 =item signin
 
-    $self->signin( $login, $password );
-
 login through L<https://github.com/login> by $self->ua
+
+return 1 if success
 
 =back
 

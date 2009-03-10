@@ -5,13 +5,12 @@ all_from 'lib/Net/GitHub.pm';
 author   'Fayland Lam <fayland@gmail.com>';
 license  'perl';
 
-requires 'Data::Dumper';
 requires 'URI::Escape';
 requires 'Moose' => '0.57';
 requires 'Crypt::SSLeay';
-requires 'WWW::Mechanize';
+requires 'WWW::Mechanize::GZip';
 requires 'JSON::Any';
-#requires 'HTML::TokeParser::Simple';
+requires 'HTML::TreeBuilder';
 
 build_requires 'Test::More';
 test_requires 'Test::MockModule';
