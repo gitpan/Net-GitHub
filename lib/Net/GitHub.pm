@@ -2,34 +2,52 @@ package Net::GitHub;
 
 use Moose;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06_01';
 our $AUTHORITY = 'cpan:FAYLAND';
 
-use Net::GitHub::Project;
-use Net::GitHub::User;
-use Net::GitHub::Search;
+has 'version' => ( isa => 'Int', is => 'ro', default => 2 );
+our $args;
 
-with 'Net::GitHub::Role';
+has 'obj' => (
+    is   => 'ro',
+    isa  => 'Object',
+    lazy_build => 1,
+    handles => ['api_url', 'project', 'search',
+            'repos', 'user', 'commit', 'issue',
+                                     'object', 'obj_tree', 'obj_blob', 'obj_raw',
+                                     'network', 'network_meta', 'network_data_chunk'],
 
-sub project {
-    my $self = shift;
-    return Net::GitHub::Project->new( @_ );
-}
+#    handles => sub {
+#        my ( $self, $meta ) = @_;
+#        if ( $meta->get_attribute('version') == 1 ) {
+#            return map { $_ => $_ } ('project', 'user', 'search');
+#        } else {
+#            return map { $_ => $_ } ('repos', 'user', 'commit', 'issue',
+#                                     'object', 'obj_tree', 'obj_blob', 'obj_raw',
+#                                     'network', 'network_meta', 'network_data_chunk');
+#        }
+#    }
 
-sub user {
-    my $self = shift;
-    return Net::GitHub::User->new( @_ );
-}
-
-has '_search' => (
-    is => 'rw',
-    isa => 'Net::GitHub::Search',
-    lazy => 1,
-    default => sub {
-        return Net::GitHub::Search->new();
-    },
-    handles => ['search'],
 );
+
+sub BUILDARGS {
+    my $class = shift;
+
+    $args = ( scalar @_ == 1 ) ? { %{ $_[0] } } : { @_ };
+    return $class->SUPER::BUILDARGS(@_);
+}
+
+
+sub _build_obj {
+    my $self = shift;
+    if ( $self->version == 1 ) {
+        require Net::GitHub::V1;
+        return Net::GitHub::V1->new($args);
+    } else {
+        require Net::GitHub::V2;
+        return Net::GitHub::V2->new($args);
+    }
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
@@ -45,29 +63,15 @@ Net::GitHub - Perl Interface for github.com
 
     use Net::GitHub;
 
-    # for http://github.com/fayland/perl-net-github/tree/master
-    my $github = Net::GitHub->new();
+    my $github = Net::GitHub->new(  # Net::GitHub::V2, default
+        owner => 'fayland', repo => 'perl-net-github'
+    );
     
-    # project
-    my $prj = $github->project( owner => 'fayland', name => 'perl-net-github' );
-    print $prj->description;
-    print $prj->public_clone_url;
-    my @commits = $prj->commits;
-    foreach my $c ( @commits ) {
-        my $commit = $prj->commit( $c->{id} );
-    }
-    my @downloads = $prj->downloads;
-    $prj->signin( 'login', 'password' );
-    $prj->wiki->new_page( 'PageTitle', "Page Content\n\nLine 2\n" );
-    
-    # user
-    my $user = $github->user( 'fayland' );
-    foreach my $repos ( @{ $user->repositories} ) {
-        print "$repos->{owner} + $repos->{name}\n";
-    }
-    
-    # search
-    my $result = $github->search( 'fayland' );
+    # DEPERCATED, for backwards
+    my $github = Net::GitHub->new(  # Net::GitHub::V1
+        version => 1,
+        owner => 'fayland', name => 'perl-net-github'
+    ); 
 
 =head1 DESCRIPTION
 
@@ -75,30 +79,35 @@ L<http://github.com> is a popular git host.
 
 Please feel free to fork L<http://github.com/fayland/perl-net-github/tree/master>, fix or contribute some code. :)
 
-=head1 ALPHA WARNING
+Read L<Net::GitHub::V2> for more details.
 
-Net::GitHub is still in its infancy. backwards compatibility is not yet guaranteed.
+    use Net::GitHub;
 
-=head1 METHODS
-
-=head2 project
-
-    $github->project( owner => 'fayland', name => 'perl-net-github' );
-    $github->project( 'fayland', 'perl-net-github' );
-
-instance of L<Net::GitHub::Project>
-
-=head2 user
-
-    $github->user( 'fayland' );
-
-instance of L<Net::GitHub::User>
-
-=head2 search
-
-    $github->search('fayland');
-
-handled by L<Net::GitHub::Search>
+    my $github = Net::GitHub->new(  # Net::GitHub::V2, default
+        owner => 'fayland', repo  => 'perl-net-github',
+        login => 'fayland', token => '54b5197d7f92f52abc5c7149b313cf51', # faked
+    );
+    
+    $github->repos->create( 'sandbox3', 'Sandbox desc', 'http://fayland.org/', 1 );
+    $github->repos->show();
+    
+    my $followers = $github->user->followers();
+    $github->user->update( name => 'Fayland Lam' );
+    
+    my $commits = $github->commit->branch();
+    my $commits = $github->commit->file( 'master', 'lib/Net/GitHub.pm' );
+    my $co_detail = $github->commit->show( $sha1 );
+    
+    my $issues = $github->issue->list('open');
+    my $issue  = $github->issue->open( 'Bug title', 'Bug detail' );
+    $github->issue->close( $number );
+    
+    my $tree = $github->obj_tree( $tree_sha1 );
+    my $blob = $github->obj_blob( $tree_sha1, 'lib/Net/GitHub.pm' );
+    my $raw  = $github->obj_raw( $sha1 );
+    
+    $github->network_meta;
+    $github->network_data_chunk( $net_hash );
 
 =head1 Git URL
 

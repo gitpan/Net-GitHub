@@ -1,14 +1,14 @@
-package Net::GitHub::Project::Downloads;
+package Net::GitHub::V1::Project::Downloads;
 
 use Moose;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use HTML::TreeBuilder;
 
-with 'Net::GitHub::Role';
-with 'Net::GitHub::Project::Role';
+with 'Net::GitHub::V1::Role';
+with 'Net::GitHub::V1::Project::Role';
 
 has 'downloads' => (
     is => 'rw',
@@ -60,13 +60,13 @@ __END__
 
 =head1 NAME
 
-Net::GitHub::Project::Downloads - GitHub Project Downloads Section
+Net::GitHub::V1::Project::Downloads - GitHub Project Downloads Section (V1)
 
 =head1 SYNOPSIS
 
-    use Net::GitHub::Project::Downloads;
+    use Net::GitHub::V1::Project::Downloads;
 
-    my $dl = Net::GitHub::Project::Downloads->new(
+    my $dl = Net::GitHub::V1::Project::Downloads->new(
         owner => 'fayland', name => 'perl-net-github'
     );
     

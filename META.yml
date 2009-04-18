@@ -3,11 +3,14 @@ abstract: 'Perl Interface for github.com'
 author:
   - 'Fayland Lam <fayland@gmail.com>'
 build_requires:
+  ExtUtils::MakeMaker: 6.42
   File::Slurp: 0
   Test::MockModule: 0
   Test::More: 0
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 0.790'
+generated_by: 'Module::Install version 0.820'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -26,4 +29,5 @@ requires:
   WWW::Mechanize::GZip: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.05
+  repository: http://github.com/fayland/perl-net-github/tree/master
+version: 0.06_01

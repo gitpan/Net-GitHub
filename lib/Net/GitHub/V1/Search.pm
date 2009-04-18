@@ -1,13 +1,13 @@
-package Net::GitHub::Search;
+package Net::GitHub::V1::Search;
 
 use Moose;
 
-our $VERSION = '0.01';
+our $VERSION = '0.06';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use URI::Escape;
 
-with 'Net::GitHub::Role';
+with 'Net::GitHub::V1::Role';
 
 sub search {
     my ( $self, $word ) = @_;
@@ -26,13 +26,13 @@ __END__
 
 =head1 NAME
 
-Net::GitHub::Search - GitHub Search
+Net::GitHub::V1::Search - GitHub Search (V1)
 
 =head1 SYNOPSIS
 
-    use Net::GitHub::Search;
+    use Net::GitHub::V1::Search;
 
-    my $search = Net::GitHub::Search->new();
+    my $search = Net::GitHub::V1::Search->new();
     my $result = $search->search('fayland');
     foreach my $repos ( @{ $result->{repositories} } ) {
         print "$repos->{description}\n";

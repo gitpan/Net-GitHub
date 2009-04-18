@@ -1,52 +1,68 @@
-Net-GitHub
+NAME
+    Net::GitHub - Perl Interface for github.com
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+SYNOPSIS
+        use Net::GitHub;
 
-A README file is required for CPAN modules since CPAN extracts the README
-file from a module distribution so that people browsing the archive
-can use it to get an idea of the module's uses. It is usually a good idea
-to provide version information here so that people can decide whether
-fixes for the module are worth downloading.
+        my $github = Net::GitHub->new(  # Net::GitHub::V2, default
+            owner => 'fayland', repo => 'perl-net-github'
+        );
+        
+    # DEPERCATED, for backwards
+        my $github = Net::GitHub->new(  # Net::GitHub::V1
+            version => 1,
+            owner => 'fayland', name => 'perl-net-github'
+        );
 
+DESCRIPTION
+    <http://github.com> is a popular git host.
 
-INSTALLATION
+    Please feel free to fork
+    <http://github.com/fayland/perl-net-github/tree/master>, fix or
+    contribute some code. :)
 
-To install this module, run the following commands:
+    Read Net::GitHub::V2 for more details.
 
-	perl Makefile.PL
-	make
-	make test
-	make install
+        use Net::GitHub;
 
-SUPPORT AND DOCUMENTATION
+        my $github = Net::GitHub->new(  # Net::GitHub::V2, default
+            owner => 'fayland', repo  => 'perl-net-github',
+            login => 'fayland', token => '54b5197d7f92f52abc5c7149b313cf51', # faked
+        );
+        
+    $github->repos->create( 'sandbox3', 'Sandbox desc', 'http://fayland.org/', 1 );
+        $github->repos->show();
+        
+    my $followers = $github->user->followers();
+        $github->user->update( name => 'Fayland Lam' );
+        
+    my $commits = $github->commit->branch();
+        my $commits = $github->commit->file( 'master', 'lib/Net/GitHub.pm' );
+        my $co_detail = $github->commit->show( $sha1 );
+        
+    my $issues = $github->issue->list('open');
+        my $issue  = $github->issue->open( 'Bug title', 'Bug detail' );
+        $github->issue->close( $number );
+        
+    my $tree = $github->obj_tree( $tree_sha1 );
+        my $blob = $github->obj_blob( $tree_sha1, 'lib/Net/GitHub.pm' );
+        my $raw  = $github->obj_raw( $sha1 );
+        
+    $github->network_meta;
+        $github->network_data_chunk( $net_hash );
 
-After installing, you can find documentation for this module with the
-perldoc command.
+Git URL
+    <http://github.com/fayland/perl-net-github/tree/master>
 
-    perldoc Net::GitHub
+SEE ALSO
+    Moose
 
-You can also look for information at:
+AUTHOR
+    Fayland Lam, "<fayland at gmail.com>"
 
-    RT, CPAN's request tracker
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-GitHub
+COPYRIGHT & LICENSE
+    Copyright 2009 Fayland Lam, all rights reserved.
 
-    AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/Net-GitHub
-
-    CPAN Ratings
-        http://cpanratings.perl.org/d/Net-GitHub
-
-    Search CPAN
-        http://search.cpan.org/dist/Net-GitHub/
-
-
-COPYRIGHT AND LICENCE
-
-Copyright (C) 2009 Fayland Lam
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
 

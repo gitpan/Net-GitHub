@@ -1,8 +1,8 @@
-package Net::GitHub::Role;
+package Net::GitHub::V1::Role;
 
 use Moose::Role;
 
-our $VERSION = '0.04';
+our $VERSION = '0.06';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use JSON::Any;
@@ -98,14 +98,14 @@ __END__
 
 =head1 NAME
 
-Net::GitHub::Role - Common between Net::GitHub::* libs
+Net::GitHub::V1::Role - Common between Net::GitHub::V1::* libs
 
 =head1 SYNOPSIS
 
-    package Net::GitHub::XXX;
+    package Net::GitHub::V1::XXX;
     
     use Moose;
-    with 'Net::GitHub::Role';
+    with 'Net::GitHub::V1::Role';
 
 =head1 DESCRIPTION
 
