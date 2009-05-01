@@ -2,7 +2,7 @@ package Net::GitHub::V2::Role;
 
 use Moose::Role;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use JSON::Any;
@@ -56,6 +56,7 @@ has 'json' => (
 sub get_json_to_obj {
     my ( $self, $pending_url, $key ) = @_;
     
+    $pending_url =~ s!^/!!; # Strip leading '/'
     my $url  = $self->api_url . $pending_url;
     my $resp = $self->ua->get($url);
     return { error => '404 Not Found' } if $resp->code == 404;
@@ -73,6 +74,7 @@ sub get_json_to_obj_authed {
     
     croak 'login and token are required' unless ( $self->login and $self->token );
     
+    $pending_url =~ s!^/!!; # Strip leading '/'
     my $url  = $self->api_url . $pending_url;
     
     my $key; # return $key from json obj
