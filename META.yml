@@ -26,6 +26,7 @@ requires:
   Any::Moose: 0
   Crypt::SSLeay: 0
   HTML::TreeBuilder: 0
+  HTTP::Request::Common: 0
   JSON::Any: 0
   MIME::Base64: 0
   URI::Escape: 0
@@ -33,4 +34,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: http://github.com/fayland/perl-net-github/tree/master
-version: 0.26
+version: 0.27
