@@ -5,7 +5,7 @@ use Any::Moose 'Role';
 our $VERSION = '0.14';
 our $AUTHORITY = 'cpan:FAYLAND';
 
-with 'Net::GitHub::V2::NoRepo' => { -excludes => [ 'args_to_pass' ] };;
+with 'Net::GitHub::V2::NoRepo' => { -excludes => [ 'args_to_pass' ] };
 
 # repo stuff
 has 'repo'  => ( isa => 'Str', is => 'ro', required => 1 );
@@ -13,7 +13,8 @@ has 'repo'  => ( isa => 'Str', is => 'ro', required => 1 );
 sub args_to_pass {
     my $self = shift;
     my $ret;
-    foreach my $col ('owner', 'repo', 'login', 'token') {
+    foreach my $col ('owner', 'repo', 'login', 'token', 'always_Authorization', 'throw_errors',
+		'api_throttle', 'api_url', 'api_url_https') {
         $ret->{$col} = $self->$col if defined $self->$col;
     }
     return $ret;

@@ -8,7 +8,7 @@ our $AUTHORITY = 'cpan:FAYLAND';
 use JSON::Any;
 use WWW::Mechanize::GZip;
 use MIME::Base64;
-use HTTP::Request::Common;
+use HTTP::Request::Common ();
 use Carp qw/croak/;
 
 # repo stuff
@@ -18,9 +18,16 @@ has 'owner' => ( isa => 'Str', is => 'ro', required => 1 );
 has 'login' => (is => 'rw', isa => 'Str', predicate => 'has_login',);
 has 'token' => (is => 'rw', isa => 'Str', predicate => 'has_token',);
 
+# always send Authorization header, useful for private respo
+has 'always_Authorization' => ( is => 'rw', isa => 'Bool', default => 0 );
+
+# simplifies error handling
+has 'throw_errors' => ( is => 'rw', isa => 'Bool', default => 0 );
+
 # api
 has 'api_url' => ( is => 'ro', default => 'http://github.com/api/v2/json/');
 has 'api_url_https' => ( is => 'ro', default => 'https://github.com/api/v2/json/');
+has 'api_throttle' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 has 'ua' => (
     isa     => 'WWW::Mechanize',
@@ -58,6 +65,11 @@ has 'json' => (
 
 sub get_json_to_obj {
     my ( $self, $pending_url, $key ) = @_;
+    
+    if ( $self->always_Authorization ) {
+        push @_, 'GET';
+        return _get_json_to_obj_authed(@_);
+    }
 
     $pending_url =~ s!^/!!; # Strip leading '/'
     my $url  = $self->api_url . $pending_url;
@@ -90,6 +102,16 @@ before get_json_to_obj_authed => sub {
 };
 
 sub get_json_to_obj_authed {
+    push @_, undef;
+    _get_json_to_obj_authed(@_);
+}
+
+sub get_json_to_obj_authed_GET {
+    push @_, 'GET';
+    _get_json_to_obj_authed(@_);
+}
+
+sub get_json_to_obj_authed_POST {
     push @_, 'POST';
     _get_json_to_obj_authed(@_);
 }
@@ -108,7 +130,7 @@ sub _get_json_to_obj_authed {
     my $self = shift;
     my $pending_url = shift;
     
-    my $request_method = pop @_; # can be DELETE or PUT
+    my $request_method = pop @_; # defaults to GET or POST if undefined
 
     croak 'login and token are required' unless ( $self->has_login and $self->has_token );
 
@@ -121,19 +143,39 @@ sub _get_json_to_obj_authed {
         $key = pop @_;
     }
 
+    $request_method ||= @_ ? 'POST' : 'GET';
     my $req = $request_method eq 'DELETE' ? HTTP::Request::Common::DELETE( $url, [ @_ ] ) :
               $request_method eq 'PUT'    ? HTTP::Request::Common::PUT( $url, [ @_ ] ) :
-                                            HTTP::Request::Common::POST( $url, [ @_ ] );
-    
+              $request_method eq 'POST'   ? HTTP::Request::Common::POST( $url, [ @_ ] ) :
+                                            HTTP::Request::Common::GET( $url );
+
     # "schacon/token:6ef8395fecf207165f1a82178ae1b984"
     my $auth_basic = $self->login . '/token:' . $self->token;
     $req->header('Authorization', 'Basic ' . encode_base64($auth_basic));
     
     my $res = $self->ua->request($req);
-    return { error => '404 Not Found' } if $res->code == 404;
+
+    # Slow down if we're approaching the rate limit
+    # By the way GitHub mistakes days for minutes in their documentation --
+    # the rate limit is per minute, not per day.
+    if ( $self->api_throttle ) {
+        sleep 2 if (($res->header('x-ratelimit-remaining') || 0)
+            < ($res->header('x-ratelimit-limit') || 60) / 2);
+    }
 
     my $json = $res->content();
-    my $data = $self->json->jsonToObj($json);
+    my $data = eval { $self->json->jsonToObj($json) };
+    unless ($data) {
+        # We tolerate bad JSON for errors,
+        # otherwise we just rethrow the JSON parsing problem.
+        die unless $res->is_error;
+        $data = { error => $res->message };
+    }
+
+    if ( $self->throw_errors ) {
+        croak (ref $data->{error} eq 'ARRAY' ? $data->{error}[0] : $data->{error})
+           if exists $data->{error};
+    }
 
     return $data->{$key} if ( $key and exists $data->{$key} );
     return $data;
@@ -142,7 +184,7 @@ sub _get_json_to_obj_authed {
 sub args_to_pass {
     my $self = shift;
     my $ret;
-    foreach my $col ('owner', 'login', 'token') {
+    foreach my $col ('owner', 'login', 'token', 'always_Authorization') {
         $ret->{$col} = $self->$col;
     }
     return $ret;
@@ -176,6 +218,10 @@ If login and token are not given to new, the module will look in the B<.gitconfi
 
 =item token
 
+=item always_Authorization
+
+always send 'Authorization' header, useful to get private respo etc.
+
 =back
 
 =head1 METHODS
@@ -207,9 +253,11 @@ Fayland Lam, C<< <fayland at gmail.com> >>
 Chris Nehren C<< apeiron@cpan.org >> refactored Net::GitHub::V2::Role to be
 smarter about requiring a repo.
 
+Lubomir Rintel C<< lkundrak@v3.sk >> for improvements
+
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009 Fayland Lam, all rights reserved.
+Copyright 2009 - 2011 Fayland Lam, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
