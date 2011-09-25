@@ -7,7 +7,7 @@ our $AUTHORITY = 'cpan:FAYLAND';
 
 use URI;
 use JSON::Any;
-use WWW::Mechanize;
+use WWW::Mechanize::GZip;
 use MIME::Base64;
 use HTTP::Request;
 use Carp qw/croak/;
@@ -52,6 +52,9 @@ sub set_default_user_repo {
         if ($self->is_pull_request_init) {
             $self->pull_request->u($user); $self->pull_request->repo($repo);
         }
+        if ($self->is_git_data_init) {
+            $self->git_data->u($user); $self->git_data->repo($repo);
+        }
     }
 
     return $self;
@@ -68,12 +71,12 @@ sub args_to_pass {
 }
 
 has 'ua' => (
-    isa     => 'WWW::Mechanize',
+    isa     => 'WWW::Mechanize::GZip',
     is      => 'ro',
     lazy    => 1,
     default => sub {
         my $self = shift;
-        return WWW::Mechanize->new(
+        return WWW::Mechanize::GZip->new(
             agent       => "perl-net-github $VERSION",
             cookie_jar  => {},
             stack_depth => 1,
@@ -138,8 +141,7 @@ sub query {
 
     return $ua->res if $self->raw_response;
     return $ua->content if $self->raw_string;
-    
-    
+
     if ($res->header('Content-Type') and $res->header('Content-Type') eq 'application/json') {
         my $json = $ua->content;
         $data = eval { $self->json->jsonToObj($json) };
@@ -154,7 +156,7 @@ sub query {
     }
 
     if ( $self->RaiseError ) {
-        croak $data->{message} if ref $data eq 'HASH' and exists $data->{message}; # for 'Client Errors'
+        croak $data->{message} if not $ua->success and ref $data eq 'HASH' and exists $data->{message}; # for 'Client Errors'
     }
     
     ## be smarter
@@ -164,6 +166,50 @@ sub query {
     }
 
     return $data;
+}
+
+## build methods on fly
+sub __build_methods {
+    my $package = shift;
+    my %methods = @_;
+    
+    foreach my $m (keys %methods) {
+        my $v = $methods{$m};
+        my $url = $v->{url};
+        my $method = $v->{method} || 'GET';
+        my $args = $v->{args} || 0; # args for ->query
+        my $check_status = $v->{check_status};
+        my $is_u_repo = $v->{is_u_repo}; # need auto shift u/repo
+        
+        $package->meta->add_method( $m => sub {
+            my $self = shift;
+            
+            # count how much %s inside u
+            my $n = 0; while ($url =~ /\%s/g) { $n++ }
+            
+            ## if is_u_repo, both ($user, $repo, @args) or (@args) should be supported
+            if ( ($is_u_repo or index($url, '/repos/%s/%s') > -1) and @_ < $n + $args) {
+                unshift @_, $self->repo;
+                unshift @_, $self->u;
+            }
+
+            # make url, replace %s with real args
+            my @uargs = splice(@_, 0, $n);
+            my $u = sprintf($url, @uargs);
+            
+            # args for json data POST
+            my @qargs = $args ? splice(@_, 0, $args) : ();
+            if ($check_status) { # need check Response Status
+                my $old_raw_response = $self->raw_response;
+                $self->raw_response(1); # need check header
+                my $res = $self->query($method, $u, @qargs);
+                $self->raw_response($old_raw_response);
+                return index($res->header('Status'), $check_status) > -1 ? 1 : 0;
+            } else {
+                return $self->query($method, $u, @qargs);
+            }
+        } );
+    }
 }
 
 no Any::Moose;

@@ -9,15 +9,25 @@ plan skip_all => 'Please export environment variable GITHUB_USER/GITHUB_PASS'
      unless $ENV{GITHUB_USER} and $ENV{GITHUB_PASS};
 
 my $gh = Net::GitHub::V3->new( login => $ENV{GITHUB_USER}, pass => $ENV{GITHUB_PASS});
-my $repos = $gh->repos;
+my $gist = $gh->gist;
 
 diag( 'Using user = ' . $ENV{GITHUB_USER} );
 
-ok( $gh );
-ok( $repos );
+ok($gist);
 
-my @p = $repos->list;
-ok(@p > 3, 'more than 3 repos');
+my $g = $gist->create( {
+      "description" => "the description for this gist",
+      "public" => 'true',
+      "files"  =>  {
+        "file1.txt" => {
+            "content" => "String file contents"
+        }
+      }
+    } );
+ok($g);
+
+use Data::Dumper;
+diag(Dumper(\$g));
 
 done_testing;
 

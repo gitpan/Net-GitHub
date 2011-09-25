@@ -27,172 +27,28 @@ sub pulls {
     return $self->query($u);
 }
 
-sub pull {
-    my $self = @_;
+## build methods on fly
+my %__methods = (
+
+    pull => { url => "/repos/%s/%s/pulls/%s" },
+
+    create_pull => { url => "/repos/%s/%s/pulls", method => "POST", args => 1 },
+    update_pull => { url => "/repos/%s/%s/pulls/%s", method => "PATCH", args => 1 },
+
+    commits => { url => "/repos/%s/%s/pulls/%s/commits" },
+    files => { url => "/repos/%s/%s/pulls/%s/files" },
+    is_merged => { url => "/repos/%s/%s/pulls/%s/merge", check_status => 204 },
+    merge => { url => "/repos/%s/%s/pulls/%s/merge", method => "PUT" },
+
+    # http://developer.github.com/v3/pulls/comments/
+    comments => { url => "/repos/%s/%s/pulls/%s/comments" },
+    comment  => { url => "/repos/%s/%s/pulls/comments/%s" },
+    create_comment => { url => "/repos/%s/%s/pulls/%s/comments", method => 'POST',  args => 1 },
+    update_comment => { url => "/repos/%s/%s/pulls/comments/%s", method => 'PATCH', args => 1 },
+    delete_comment => { url => "/repos/%s/%s/pulls/comments/%s", method => 'DELETE', check_status => 204 },
     
-    if (@_ < 3) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $id) = @_;
-
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/' . $id;
-    return $self->query($u);
-}
-
-sub create_pull {
-    my $self = shift;
-    
-    if (@_ == 1) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $pull) = @_;
-
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls';
-    return $self->query('POST', $u, $pull);
-}
-
-sub update_pull {
-    my $self = shift;
-    
-    if (@_ < 3) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $id, $pull) = @_;
-
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/' . uri_escape($id);
-    return $self->query('PATCH', $u, $pull);
-}
-
-sub commits {
-    my $self = @_;
-    
-    if (@_ < 3) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $id) = @_;
-
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/' . $id . '/commits';
-    return $self->query($u);
-}
-
-sub files {
-    my $self = @_;
-    
-    if (@_ < 3) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $id) = @_;
-
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/' . $id . '/files';
-    return $self->query($u);
-}
-
-sub is_merged {
-    my $self = shift;
-    
-    if (@_ == 1) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $id) = @_;
-
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/' . $id . '/merge';
-    
-    my $old_raw_response = $self->raw_response;
-    $self->raw_response(1); # need check header
-    my $res = $self->query($u);
-    $self->raw_response($old_raw_response);
-    return $res->header('Status') =~ /204/ ? 1 : 0;
-}
-
-sub merge {
-    my $self = shift;
-    
-    if (@_ == 1) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $id) = @_;
-
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/' . $id . '/merge';
-    return $self->query('PUT', $u);
-}
-
-## http://developer.github.com/v3/pulls/comments/
-
-sub comments {
-    my $self = shift;
-    
-    if (@_ == 1) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $pull_id) = @_;
-
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/' . uri_escape($pull_id) . '/comments';
-    return $self->query($u);
-}
-sub comment {
-    my $self = shift;
-    
-    if (@_ == 1) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $cid) = @_;
-    
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/comments/' . uri_escape($cid);
-    return $self->query($u);
-}
-sub create_comment {
-    my $self = shift;
-    
-    if (@_ < 3) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $pull_id, $comment) = @_;
-    
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/' . uri_escape($pull_id) . '/comments';
-    return $self->query('POST', $u, $comment);
-}
-
-sub update_comment {
-    my $self = shift;
-    
-    if (@_ < 3) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $cid, $comment) = @_;
-    
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/comments/' . uri_escape($cid);
-    return $self->query('PATCH', $u, $comment);
-}
-
-sub delete_comment {
-    my $self = shift;
-    
-    if (@_ == 1) {
-        unshift @_, $self->repo;
-        unshift @_, $self->u;
-    }
-    my ($user, $repos, $cid) = @_;
-    
-    my $u = "/repos/" . uri_escape($user) . "/" . uri_escape($repos) . '/pulls/comments/' . uri_escape($cid);
-    
-    my $old_raw_response = $self->raw_response;
-    $self->raw_response(1); # need check header
-    my $res = $self->query('DELETE', $u);
-    $self->raw_response($old_raw_response);
-    return $res->header('Status') =~ /204/ ? 1 : 0;
-}
-
+);
+__build_methods(__PACKAGE__, %__methods);
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
@@ -213,7 +69,7 @@ Net::GitHub::V3::PullRequests - GitHub Pull Requests API
 
 =head1 DESCRIPTION
 
-<B>To ease the keyboard, we provied two ways to call any method which starts with :user/:repo</B>
+B<To ease the keyboard, we provied two ways to call any method which starts with :user/:repo>
 
 1. SET user/repos before call methods below
 
@@ -298,13 +154,6 @@ L<http://developer.github.com/v3/pulls/comments/>
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHOR & COPYRIGHT & LICENSE
 
-Fayland Lam, C<< <fayland at gmail.com> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2009 Fayland Lam, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+Refer L<Net::GitHub>

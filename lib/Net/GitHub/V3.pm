@@ -11,6 +11,9 @@ use Net::GitHub::V3::Users;
 use Net::GitHub::V3::Repos;
 use Net::GitHub::V3::Issues;
 use Net::GitHub::V3::PullRequests;
+use Net::GitHub::V3::Orgs;
+use Net::GitHub::V3::GitData;
+use Net::GitHub::V3::Gists;
 
 has '+is_main_module' => (default => 1);
 
@@ -21,6 +24,26 @@ has 'user' => (
     default => sub {
         my $self = shift;
         return Net::GitHub::V3::Users->new( $self->args_to_pass );
+    },
+);
+
+has 'org' => (
+    is => 'rw',
+    isa => 'Net::GitHub::V3::Orgs',
+    lazy => 1,
+    default => sub {
+        my $self = shift;
+        return Net::GitHub::V3::Orgs->new( $self->args_to_pass );
+    },
+);
+
+has 'gist' => (
+    is => 'rw',
+    isa => 'Net::GitHub::V3::Gists',
+    lazy => 1,
+    default => sub {
+        my $self = shift;
+        return Net::GitHub::V3::Gists->new( $self->args_to_pass );
     },
 );
 
@@ -57,6 +80,17 @@ has 'pull_request' => (
     },
 );
 
+has 'git_data' => (
+    is => 'rw',
+    isa => 'Net::GitHub::V3::GitData',
+    lazy => 1,
+    predicate => 'is_git_data_init',
+    default => sub {
+        my $self = shift;
+        return Net::GitHub::V3::GitData->new( $self->args_to_pass );
+    },
+);
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 
@@ -72,7 +106,7 @@ Net::GitHub::V3 - Github API v3
 Prefer:
 
     use Net::GitHub;
-    my $github = Net::GitHub->new(
+    my $gh = Net::GitHub->new(
         version => 3,
         login => 'fayland', pass => 'mypass',
         # or
@@ -82,7 +116,7 @@ Prefer:
 Or:
 
     use Net::GitHub::V3;
-    my $github = Net::GitHub::V3->new(
+    my $gh = Net::GitHub::V3->new(
         login => 'fayland', pass => 'mypass',
         # or
         # access_token => $oauth_token
@@ -159,7 +193,7 @@ query API directly
     $gh->set_default_user_repo('fayland', 'perl-net-github'); # take effects for all $gh->
     $gh->repos->set_default_user_repo('fayland', 'perl-net-github'); # take effects on $gh->repos
 
-<B>To ease the keyboard, we provied two ways to call any method which starts with :user/:repo</B>
+B<To ease the keyboard, we provied two ways to call any method which starts with :user/:repo>
 
 1. SET user/repos before call methods below
 
@@ -202,6 +236,20 @@ L<Net::GitHub::V3::Issues>
     my @pulls = $gh->pull_request->pulls();
 
 L<Net::GitHub::V3::PullRequests>
+
+=head3 org
+
+    my @orgs   = $gh->org->orgs;
+    
+L<Net::GitHub::V3::Orgs>
+
+=head3 git_data
+
+L<Net::GitHub::V3::GitData>
+
+=head3 gist
+
+L<Net::GitHub::V3::Gists>
 
 =head1 SEE ALSO
 
