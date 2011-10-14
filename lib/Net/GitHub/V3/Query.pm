@@ -92,7 +92,7 @@ has 'json' => (
     isa => 'JSON::Any',
     lazy => 1,
     default => sub {
-        return JSON::Any->new;
+        return JSON::Any->new( utf8 => 1 );
     }
 );
 
@@ -189,8 +189,7 @@ sub __build_methods {
             
             ## if is_u_repo, both ($user, $repo, @args) or (@args) should be supported
             if ( ($is_u_repo or index($url, '/repos/%s/%s') > -1) and @_ < $n + $args) {
-                unshift @_, $self->repo;
-                unshift @_, $self->u;
+                unshift @_, ($self->u, $self->repo);
             }
 
             # make url, replace %s with real args
