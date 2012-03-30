@@ -14,6 +14,8 @@ use Net::GitHub::V3::PullRequests;
 use Net::GitHub::V3::Orgs;
 use Net::GitHub::V3::GitData;
 use Net::GitHub::V3::Gists;
+use Net::GitHub::V3::OAuth;
+use Net::GitHub::V3::Events;
 
 has '+is_main_module' => (default => 1);
 
@@ -91,6 +93,26 @@ has 'git_data' => (
     },
 );
 
+has 'oauth' => (
+    is => 'rw',
+    isa => 'Net::GitHub::V3::OAuth',
+    lazy => 1,
+    default => sub {
+        my $self = shift;
+        return Net::GitHub::V3::OAuth->new( $self->args_to_pass );
+    },
+);
+
+has 'event' => (
+    is => 'rw',
+    isa => 'Net::GitHub::V3::Events',
+    lazy => 1,
+    default => sub {
+        my $self = shift;
+        return Net::GitHub::V3::Events->new( $self->args_to_pass );
+    },
+);
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 
@@ -137,7 +159,7 @@ There are two ways to authenticate through GitHub API v3:
 =item login/pass
 
     my $gh = Net::GitHub::V3->new( login => $ENV{GITHUB_USER}, pass => $ENV{GITHUB_PASS} );
-    
+
 =item access_token
 
     my $gh = Net::GitHub->new( access_token => $ENV{GITHUB_ACCESS_TOKEN} );
@@ -159,7 +181,7 @@ return raw L<HTTP::Response> object
         # login/pass or access_token
         raw_string => 1
     );
-    
+
 return L<HTTP::Response> response content as string
 
 =head3 api_throttle
@@ -240,7 +262,7 @@ L<Net::GitHub::V3::PullRequests>
 =head3 org
 
     my @orgs   = $gh->org->orgs;
-    
+
 L<Net::GitHub::V3::Orgs>
 
 =head3 git_data
@@ -250,6 +272,14 @@ L<Net::GitHub::V3::GitData>
 =head3 gist
 
 L<Net::GitHub::V3::Gists>
+
+=head3 oauth
+
+L<Net::GitHub::V3::OAuth>
+
+=head3 event
+
+L<Net::GitHub::V3::Events>
 
 =head1 SEE ALSO
 
