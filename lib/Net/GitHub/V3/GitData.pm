@@ -16,6 +16,10 @@ my %__methods = (
     
     commit => { url => "/repos/%s/%s/git/commits/%s" },
     create_commit => { url => "/repos/%s/%s/git/commits", method => 'POST', args => 1 },
+
+    tree => { url => "/repos/%s/%s/git/trees/%s" },
+    trees => { url => "/repos/%s/%s/git/trees/%s?recursive=1" },
+    create_tree => { url => "/repos/%s/%s/git/trees", method => 'POST', args => 1 },
     
     refs => { url => "/repos/%s/%s/git/refs" },
     ref  => { url => "/repos/%s/%s/git/refs/%s" },
@@ -129,6 +133,24 @@ L<http://developer.github.com/v3/git/tags/>
 
     my $tag = $git_data->tag($sha);
     my $tag = $git_data->create_tag($tag_data);
+
+=back
+
+=head3
+
+L<http://developer.github.com/v3/git/trees/>
+
+=over 4
+
+=item tree
+
+=item trees
+
+=item create_tree
+
+    my $tree = $git_data->tree($sha);
+    my $trees = $git_data->trees($sha);
+    my $tree = $git_data->create_tree($tree_data);
 
 =back
 
