@@ -27,6 +27,12 @@ has 'raw_response' => (is => 'rw', isa => 'Bool', default => 0);
 has 'api_url' => (is => 'ro', default => 'https://api.github.com');
 has 'api_throttle' => ( is => 'rw', isa => 'Bool', default => 1 );
 
+# pagination
+has 'next_url'  => ( is => 'rw', isa => 'Str', predicate => 'has_next_page',  clearer => 'clear_next_url' );
+has 'last_url'  => ( is => 'rw', isa => 'Str', predicate => 'has_last_page',  clearer => 'clear_last_url' );
+has 'first_url' => ( is => 'rw', isa => 'Str', predicate => 'has_first_page', clearer => 'clear_first_url' );
+has 'prev_url'  => ( is => 'rw', isa => 'Str', predicate => 'has_prev_page',  clearer => 'clear_prev_url' );
+
 # Error handle
 has 'RaiseError' => ( is => 'rw', isa => 'Bool', default => 1 );
 
@@ -37,10 +43,10 @@ has 'repo' => (is => 'rw', isa => 'Str');
 has 'is_main_module' => (is => 'ro', isa => 'Bool', default => 0);
 sub set_default_user_repo {
     my ($self, $user, $repo) = @_;
-    
+
     $self->u($user);
     $self->repo($repo);
-    
+
     # need apply to all sub modules
     if ($self->is_main_module) {
         if ($self->is_repos_init) {
@@ -98,7 +104,7 @@ has 'json' => (
 
 sub query {
     my $self = shift;
-    
+
     # fix ARGV, not sure if it's the good idea
     my @args = @_;
     if (@args == 1) {
@@ -121,7 +127,7 @@ sub query {
     }
 
     $url = $self->api_url . $url unless $url =~ /^https\:/;
-    
+
     my $req = HTTP::Request->new( $request_method, $url );
     if ($data) {
         my $json = $self->json->objToJson($data);
@@ -158,7 +164,13 @@ sub query {
     if ( $self->RaiseError ) {
         croak $data->{message} if not $ua->success and ref $data eq 'HASH' and exists $data->{message}; # for 'Client Errors'
     }
-    
+
+    $self->_clear_pagination;
+    if ($res->header('link')) {
+        my @rel_strs = split ',', $res->header('link');
+        $self->_extract_link_url(\@rel_strs);
+    }
+
     ## be smarter
     if (wantarray) {
         return @$data if ref $data eq 'ARRAY';
@@ -168,11 +180,44 @@ sub query {
     return $data;
 }
 
+sub next_page {
+    my $self = shift;
+    return $self->query($self->next_url);
+}
+
+sub _clear_pagination {
+    my $self = shift;
+    foreach my $page (qw/first last prev next/) {
+        my $clearer = 'clear_' . $page . '_url';
+        $self->$clearer;
+    }
+    return 1;
+}
+
+sub _extract_link_url {
+    my ($self, $raw_strs) = @_;
+    foreach my $str (@$raw_strs) {
+        my ($link_url, $rel) = split ';', $str;
+
+        $link_url =~ s/^\s*//;
+        $link_url =~ s/^<//;
+        $link_url =~ s/>$//;
+
+        $rel =~ m/rel="(next|last|first|prev)"/;
+        $rel = $1;
+
+        my $url_attr = $rel . "_url";
+        $self->$url_attr($link_url);
+    }
+
+    return 1;
+}
+
 ## build methods on fly
 sub __build_methods {
     my $package = shift;
     my %methods = @_;
-    
+
     foreach my $m (keys %methods) {
         my $v = $methods{$m};
         my $url = $v->{url};
@@ -180,13 +225,13 @@ sub __build_methods {
         my $args = $v->{args} || 0; # args for ->query
         my $check_status = $v->{check_status};
         my $is_u_repo = $v->{is_u_repo}; # need auto shift u/repo
-        
+
         $package->meta->add_method( $m => sub {
             my $self = shift;
-            
+
             # count how much %s inside u
             my $n = 0; while ($url =~ /\%s/g) { $n++ }
-            
+
             ## if is_u_repo, both ($user, $repo, @args) or (@args) should be supported
             if ( ($is_u_repo or index($url, '/repos/%s/%s') > -1) and @_ < $n + $args) {
                 unshift @_, ($self->u, $self->repo);
@@ -195,7 +240,7 @@ sub __build_methods {
             # make url, replace %s with real args
             my @uargs = splice(@_, 0, $n);
             my $u = sprintf($url, @uargs);
-            
+
             # args for json data POST
             my @qargs = $args ? splice(@_, 0, $args) : ();
             if ($check_status) { # need check Response Status
@@ -262,6 +307,10 @@ L<http://developer.github.com/>
 =item query
 
 Refer L<Net::GitHub::V3>
+
+=item next_page
+
+Calls C<query> with C<next_url>. See L<Net::GitHub::V3>
 
 =back
 
