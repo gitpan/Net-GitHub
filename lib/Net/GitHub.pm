@@ -2,7 +2,7 @@ package Net::GitHub;
 
 use Any::Moose;
 
-our $VERSION = '0.46';
+our $VERSION = '0.47';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 sub new {
@@ -40,6 +40,12 @@ Net::GitHub - Perl Interface for github.com
     my $github = Net::GitHub->new(  # Net::GitHub::V3
         login => 'fayland', pass => 'secret'
     );
+
+    #Pass api_url for GitHub Enterprise installations
+    my $github = Net::GitHub->new(  # Net::GitHub::V3
+        login => 'fayland', pass => 'secret',  api_url => 'https://gits.aresweet.com/api/v3'
+    );
+
 
     # suggested
     # use OAuth to create token with user/pass
