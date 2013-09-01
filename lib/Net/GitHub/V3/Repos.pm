@@ -2,7 +2,7 @@ package Net::GitHub::V3::Repos;
 
 use Any::Moose;
 
-our $VERSION = '0.50';
+our $VERSION = '0.53';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use URI::Escape;
@@ -15,6 +15,14 @@ sub list {
     $type ||= 'all';
     my $u = '/user/repos';
     $u .= '?type=' . $type if $type ne 'all';
+    return $self->query($u);
+}
+
+sub list_all {
+    my ( $self, $since ) = @_;
+    $since ||= 'first';
+    my $u = '/repositories';
+    $u .= '?since=' . $since if $since ne 'first';
     return $self->query($u);
 }
 
@@ -224,6 +232,13 @@ L<http://developer.github.com/v3/repos/>
 =over 4
 
 =item list
+
+=item list_all
+
+    # All public repositories on Github
+    my @rp = $repos->list_all;
+    # starting at id 500
+    my @rp = $repos->list_all(500);
 
 =item list_user
 
