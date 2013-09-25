@@ -2,7 +2,7 @@ package Net::GitHub::V3::Users;
 
 use Any::Moose;
 
-our $VERSION = '0.40';
+our $VERSION = '0.54';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use URI::Escape;
@@ -11,7 +11,7 @@ with 'Net::GitHub::V3::Query';
 
 sub show {
     my ( $self, $user ) = @_;
-    
+
     my $u = $user ? "/users/" . uri_escape($user) : '/user';
     return $self->query($u);
 }
@@ -19,7 +19,7 @@ sub show {
 sub update {
     my $self = shift;
     my $data = @_ % 2 ? shift @_ : { @_ };
-    
+
     return $self->query('PATCH', '/user', $data);
 }
 
@@ -31,22 +31,32 @@ sub remove_email {
 }
 sub followers {
     my ($self, $user) = @_;
-    
+
     my $u = $user ? "/users/" . uri_escape($user) . '/followers' : '/user/followers';
     return $self->query($u);
 }
 sub following {
     my ($self, $user) = @_;
-    
+
     my $u = $user ? "/users/" . uri_escape($user) . '/following' : '/user/following';
     return $self->query($u);
+}
+
+sub contributions {
+    my ( $self, $user ) = @_;
+    my $path = "/users/" . uri_escape($user) . "/contributions_calendar_data";
+    my $domain
+        = $self->api_url eq 'https://api.github.com'
+        ? 'https://github.com'
+        : $self->api_url;
+    return $self->query( $domain . $path );
 }
 
 ## build methods on fly
 my %__methods = (
 
     emails => { url => "/user/emails" },
-    
+
     is_following => { url => "/user/following/%s", check_status => 204 },
     follow => { url => "/user/following/%s", method => 'PUT', check_status => 204 },
     unfollow => { url => "/user/following/%s", method => 'DELETE', check_status => 204 },
@@ -174,6 +184,16 @@ L<http://developer.github.com/v3/users/keys/>
         key   => $key
     });
     $user->delete_key($key_id);
+
+=item contributions
+
+    my $contributions = $user->contributions($username);
+    # $contributions = ( ..., ['2013/09/22', 3], [ '2013/09/23', 2 ] )
+
+Unpublished GitHub API used to build the 'Public contributions' graph on a
+users' profile page.  The data structure is a list of 365 arrayrefs, one per day.
+Each array has two elements, the date in YYYY/MM/DD format is the first element,
+the second is the number of contrubtions for that day.stree .
 
 =back
 
