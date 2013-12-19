@@ -29,7 +29,6 @@ requires:
   HTML::TreeBuilder: 0
   HTTP::Request::Common: 0
   JSON::Any: 0
-  JSON::XS: 0
   MIME::Base64: 0
   URI: 0
   URI::Escape: 0
@@ -37,4 +36,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: https://github.com/fayland/perl-net-github
-version: 0.54
+version: 0.55
