@@ -36,4 +36,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: https://github.com/fayland/perl-net-github
-version: 0.58
+version: 0.59
