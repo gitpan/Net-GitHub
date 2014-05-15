@@ -20,6 +20,7 @@ meta-spec:
 name: Net-GitHub
 no_index:
   directory:
+    - examples
     - inc
     - t
     - xt
@@ -36,4 +37,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: https://github.com/fayland/perl-net-github
-version: 0.59
+version: 0.60
