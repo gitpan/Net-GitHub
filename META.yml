@@ -35,4 +35,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: https://github.com/fayland/perl-net-github
-version: 0.61_01
+version: 0.62
