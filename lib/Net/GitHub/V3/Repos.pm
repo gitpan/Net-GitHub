@@ -2,7 +2,7 @@ package Net::GitHub::V3::Repos;
 
 use Moo;
 
-our $VERSION = '0.60';
+our $VERSION = '0.64';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 use Carp;
@@ -83,7 +83,7 @@ sub upload_asset {
 
     my $data;
     if ($res->header('Content-Type') and $res->header('Content-Type') =~ 'application/json') {
-        my $json = $ua->content;
+        my $json = $res->decoded_content;
         $data = eval { $self->json->jsonToObj($json) };
         unless ($data) {
             # We tolerate bad JSON for errors,
